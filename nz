@@ -1,0 +1,45 @@
+#!/bin/python3
+#解压文件
+import os
+import argparse
+import zipfile
+import cchardet
+import shutil
+def torecode(path):
+    for zw in os.listdir(path):
+        try:
+            rzw=zw.encode('cp437').decode('gbk')
+        except:
+            rzw=zw.encode('utf-8').decode('utf-8')
+        os.rename(path+'/'+zw,path+'/'+rzw)
+        if os.path.isdir(path+'/'+rzw):
+            torecode(path+'/'+rzw)
+    
+path=os.path.abspath('.')+'/'
+parser=argparse.ArgumentParser(description='unzip a zipfile')
+parser.add_argument('integers',metavar='N',type=str,nargs='+',help='input a zipfile to unzip')
+temp=parser.parse_args()
+filename=temp.integers
+
+for i in filename:
+    filepath=path+i
+    zfile=zipfile.ZipFile(filepath,"r")
+    tfile=open(rf'{filepath}','rb')
+    code=cchardet.detect(tfile.read())['encoding']
+    try:
+        os.mkdir(path+i[:-4])
+    except:
+        a=input(f"是否删除当前文件夹下的{i[:-4]}(Y/n):")
+        if a=='n':
+            exit()
+        else:
+            shutil.rmtree(path+i[:-4])
+            os.mkdir(path+i[:-4])
+    for zw in zfile.namelist():
+        zfile.extract(zw,path+i[:-4])
+    zfile.close()
+    if code==None:
+        torecode(filepath[:-4])
+print("解压完成")
+
+
