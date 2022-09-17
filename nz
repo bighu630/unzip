@@ -1,11 +1,15 @@
 #!/bin/python3
 #解压文件
+#解决windows文件复制到linux上后编码错误导致的文件乱码
 import os
 import argparse
 import zipfile
 import cchardet
 import shutil
-def torecode(path):
+
+#对文件进行重新编码
+def funcDecode(path):
+    #遍历压缩包内的文件，逐个重行编码
     for zw in os.listdir(path):
         try:
             rzw=zw.encode('cp437').decode('gbk')
@@ -13,33 +17,39 @@ def torecode(path):
             rzw=zw.encode('utf-8').decode('utf-8')
         os.rename(path+'/'+zw,path+'/'+rzw)
         if os.path.isdir(path+'/'+rzw):
-            torecode(path+'/'+rzw)
-    
-path=os.path.abspath('.')+'/'
-parser=argparse.ArgumentParser(description='unzip a zipfile')
-parser.add_argument('integers',metavar='N',type=str,nargs='+',help='input a zipfile to unzip')
-temp=parser.parse_args()
-filename=temp.integers
+            funcDecode(path+'/'+rzw)
 
-for i in filename:
-    filepath=path+i
-    zfile=zipfile.ZipFile(filepath,"r")
-    tfile=open(rf'{filepath}','rb')
-    code=cchardet.detect(tfile.read())['encoding']
-    try:
-        os.mkdir(path+i[:-4])
-    except:
-        a=input(f"是否删除当前文件夹下的{i[:-4]}(Y/n):")
-        if a=='n':
-            exit()
-        else:
-            shutil.rmtree(path+i[:-4])
+#获取需要解密的文件
+def funcGetfiles():
+    #锚定path
+    path=os.path.abspath('.')+'/'
+    #获取需要解压的文件列表
+    parser=argparse.ArgumentParser(description='unzip a zipfile')
+    parser.add_argument('integers',metavar='N',type=str,nargs='+',help='input a zipfile to unzip')
+    temp=parser.parse_args()
+    filename=temp.integers
+
+    #解压文件
+    for i in filename:
+        filepath=path+i
+        zfile=zipfile.ZipFile(filepath,"r")
+        tfile=open(rf'{filepath}','rb')
+        code=cchardet.detect(tfile.read())['encoding']
+        try:
             os.mkdir(path+i[:-4])
-    for zw in zfile.namelist():
-        zfile.extract(zw,path+i[:-4])
-    zfile.close()
-    if code==None:
-        torecode(filepath[:-4])
-print("解压完成")
+        except:
+            a=input(f"是否删除当前文件夹下的{i[:-4]}(Y/n):")
+            if a=='n':
+                exit()
+            else:
+                shutil.rmtree(path+i[:-4])
+                os.mkdir(path+i[:-4])
+        for zw in zfile.namelist():
+            zfile.extract(zw,path+i[:-4])
+        zfile.close()
+        if code==None:
+            funcDecode(filepath[:-4])
+    print("解压完成")
 
-
+if __name__ == "__main__":
+    funcGetfiles()
